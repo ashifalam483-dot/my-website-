@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FeedAI - Smart Feedback Summarizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<style>
+* { box-sizing: border-box; margin:0; padding:0; font-family:'Poppins',sans-serif; }
+body { background: linear-gradient(135deg,#f5f6fa,#e9f0f7); color:#333; }
+header { background:#007bff; color:white; text-align:center; padding:20px; font-size:26px; font-weight:600; box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+nav { display:flex; justify-content:center; flex-wrap:wrap; background:#0056b3; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+nav button { margin:5px; padding:10px 25px; border-radius:10px; border:none; color:white; font-weight:600; cursor:pointer; background:#007bff; transition: background 0.2s, transform 0.2s;}
+nav button:hover { background:#004a99; transform:scale(1.07);}
+nav button .material-icons { vertical-align:middle; margin-right:7px; font-size:20px;}
+.page { display:none; padding:30px 20px; max-width:700px; margin:auto; animation: fadeIn 0.5s ease;}
+.active { display:block; }
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+h2 { text-align:center; margin-bottom:20px; color:#007bff;}
+p { text-align:center; margin-bottom:20px; font-size:16px; color:#555;}
+textarea { width:100%; height:150px; border-radius:12px; padding:15px; font-size:16px; border:1px solid #ccc; resize:none; box-shadow:0 4px 10px rgba(0,0,0,0.05);}
+input[type="text"],input[type="email"],input[type="password"] { width:100%; padding:12px; margin:8px 0; border-radius:12px; border:1px solid #ccc; font-size:16px; }
+button.submit { background:#28a745; color:white; border:none; padding:12px 25px; border-radius:12px; cursor:pointer; font-size:16px; font-weight:600; box-shadow:0 4px 8px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.2s;}
+button.submit:hover { background:#218838; transform:scale(1.05);}
+button.submit:active { background: #006400; transform:scale(0.97);}
+.output { background:#fff; padding:20px; border-radius:15px; box-shadow:0 6px 15px rgba(0,0,0,0.1); margin-top:20px; line-height:1.6; transition:0.3s;}
+.output strong { color:#007bff; }
+.history-item { background:#e0f0ff; padding:15px; border-radius:12px; margin-bottom:12px; box-shadow:0 4px 10px rgba(0,0,0,0.05); transition:0.3s;}
+.history-item:hover { background:#cce6ff; transform:translateY(-3px);}
+.card { background:white; padding:20px; border-radius:15px; box-shadow:0 6px 20px rgba(0,0,0,0.1); margin-bottom:20px; transition:0.3s; animation: fadeIn 0.6s;}
+.card:hover { transform:translateY(-5px); box-shadow:0 8px 25px rgba(0,0,0,0.15);}
+#loadingSpinner { display:none; text-align:center; margin:15px; }
+.empty-history {text-align:center;padding:25px;color:#aaa;}
+footer { text-align:center; padding:15px; color:#555; font-size:14px; margin-top:30px; }
+.tooltip {
+  position:relative;
+  display:inline-block;
+}
+.tooltip .tooltiptext {
+  visibility:hidden;
+  width:130px;
+  background:#333;
+  color:#fff;
+  text-align:center;
+  border-radius:6px;
+  padding:5px 10px;
+  position:absolute;
+  z-index:1;
+  bottom:125%; left:50%; margin-left:-65px;
+  opacity:0; 
+  transition:opacity 0.3s;
+  font-size:13px;
+}
+.tooltip:hover .tooltiptext {
+  visibility:visible;
+  opacity:1;
+}
+</style>
+</head>
+<body>
+
+<header id="greeting">🧠 FeedAI - Smart Feedback Summarizer | Made by Shahzeb Alam</header>
+
+<nav>
+  <button onclick="showPage('home')"><span class="material-icons">home</span>Home</button>
+  <button onclick="showPage('summarize')"><span class="material-icons">summarize</span>Summarize</button>
+  <button onclick="showPage('history')"><span class="material-icons">history</span>History</button>
+  <button onclick="showPage('login')"><span class="material-icons">person</span>Login/Signup</button>
+</nav>
+
+<!-- Home Page -->
+<div id="home" class="page active">
+  <h2>Welcome to FeedAI</h2>
+  <p>Paste your feedback below and let our AI summarize it instantly!</p>
+  <div class="card">
+    <textarea id="homeFeedback" placeholder="Enter feedback here..."></textarea>
+    <button class="submit tooltip" onclick="goToSummarize('homeFeedback')">
+      <span class="material-icons" style="vertical-align:middle;">arrow_forward</span>
+      <span class="tooltiptext">Go to summarize page</span>
+      Go to Summarize
+    </button>
+  </div>
+</div>
+
+<!-- Summarize Page -->
+<div id="summarize" class="page">
+  <h2>
+    <span class="material-icons" style="vertical-align:middle;">summarize</span>
+    Summarize Feedback
+  </h2>
+  <div class="card">
+    <textarea id="feedbackInput" placeholder="Paste feedback here..."></textarea>
+    <label for="summaryLength"><span class="material-icons">short_text</span> Summary Length:</label>
+    <select id="summaryLength">
+      <option value="short">Short</option>
+      <option value="detailed">Detailed</option>
+    </select>
+    <!-- Spinner when summarizing -->
+    <div id="loadingSpinner">
+      <svg width="38" height="38" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="16" stroke="#007bff" stroke-width="4" fill="none" stroke-dasharray="90" stroke-dashoffset="60">
+          <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1.2s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+    <button class="submit tooltip" onclick="summarizeFeedback()">
+      <span class="material-icons" style="vertical-align:middle;">bolt</span>
+      <span class="tooltiptext">Summarize now</span>
+      Summarize Now
+    </button>
+    <div class="output" id="summaryOutput">Your AI summary will appear here...</div>
+    <div class="output" id="sentimentOutput"></div>
+    <!-- Copy Button with tooltip -->
+    <button class="submit tooltip" onclick="copySummary()" style="background:#007bff;margin-top:12px;">
+      <span class="material-icons" style="vertical-align:middle;">content_copy</span>
+      <span class="tooltiptext">Copy summary to clipboard</span>
+      Copy Summary
+    </button>
+  </div>
+</div>
+
+<!-- History / Results Page -->
+<div id="history" class="page">
+  <h2>
+    <span class="material-icons" style="vertical-align:middle;">history</span>
+    Summary History & Trends
+  </h2>
+  <div id="historyList"></div>
+  <div class="card" style="margin-top:15px;">
+    <p><span class="material-icons" style="vertical-align:middle;font-size:35px;color:#007bff;">show_chart</span>
+    <strong>Trends Coming Soon:</strong> Feedback Trends/Chart will be shown here.</p>
+  </div>
+</div>
+
+<!-- Login / Signup Page -->
+<div id="login" class="page">
+  <h2>
+    <span class="material-icons" style="vertical-align:middle;">person</span>
+    Login / Signup
+  </h2>
+  <div class="card">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button class="submit tooltip" onclick="login()">
+      <span class="material-icons" style="vertical-align:middle;">login</span>
+      <span class="tooltiptext">Login to your account</span>
+      Login
+    </button>
+    <button class="submit tooltip" onclick="signup()" style="background:#1976d2;">
+      <span class="material-icons" style="vertical-align:middle;">person_add</span>
+      <span class="tooltiptext">Create new account</span>
+      Signup
+    </button>
+  </div>
+</div>
+
+<footer>© 2025 FeedAI - Made by Shahzeb Alam</footer>
+
+<script>
+const API_URL = "http://localhost:3000";
+
+// Personalize greeting if logged in
+window.onload = function() {
+  const name = localStorage.getItem('userEmail');
+  if(name) {
+    document.getElementById('greeting').innerText = `Hi, ${name.split('@')[0]}! 🧠 FeedAI - Smart Feedback Summarizer | Made by Shahzeb Alam`;
+  }
+  updateHistoryEmpty();
+};
+
+// --- Navigation ---
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  if(pageId === 'history') updateHistoryEmpty();
+}
+
+function goToSummarize(sourceId){
+  document.getElementById('feedbackInput').value = document.getElementById(sourceId).value;
+  showPage('summarize');
+}
+
+// --- Loading Spinner Control ---
+function startLoading(){
+  document.getElementById("loadingSpinner").style.display = "block";
+}
+function stopLoading(){
+  document.getElementById("loadingSpinner").style.display = "none";
+}
+
+// --- Summarize Feedback using Backend ---
+async function summarizeFeedback(){
+  const text = document.getElementById('feedbackInput').value;
+  const length = document.getElementById('summaryLength').value;
+  if(!text){ alert("Please enter feedback"); return; }
+
+  startLoading();
+  try{
+    const response = await fetch(`${API_URL}/summarize`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({feedback:text, length:length, email:localStorage.getItem('userEmail')})
+    });
+    const data = await response.json();
+    document.getElementById('summaryOutput').innerText = data.summary;
+    document.getElementById('sentimentOutput').innerText = data.sentiment ? `Sentiment: ${data.sentiment}` : "";
+    addToHistory(text, data.summary, data.sentiment);
+  }catch(err){
+    alert("Error: " + err.message);
+  }
+  stopLoading();
+}
+
+// --- Copy summary button ---
+function copySummary() {
+  const text = document.getElementById('summaryOutput').innerText;
+  if (text) {
+    navigator.clipboard.writeText(text);
+    alert("Summary copied!");
+  }
+}
+
+// --- History + Empty State ---
+function addToHistory(original, summary, sentiment){
+  const historyList = document.getElementById('historyList');
+  const item = document.createElement('div');
+  item.classList.add('history-item');
+  item.innerHTML = `<strong>Original:</strong> ${original}<br><strong>Summary:</strong> ${summary}<br>${sentiment ? '<strong>Sentiment:</strong> ' + sentiment : ''}`;
+  historyList.prepend(item);
+  updateHistoryEmpty();
+}
+
+// Show "No history" message if none
+function updateHistoryEmpty(){
+  const list = document.getElementById('historyList');
+  if (list.children.length === 0) {
+    list.innerHTML = '<div class="empty-history"><span class="material-icons" style="font-size:30px;">sticky_note_2</span><br>No summary history.<br>Start summarizing!</div>';
+  }
+}
+
+// --- Login / Signup ---
+async function login(){
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  if(!email || !password){ alert("Enter email & password"); return; }
+
+  const res = await fetch(`${API_URL}/login`,{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({email,password})
+  });
+  const data = await res.json();
+  if(data.success){ localStorage.setItem('userEmail', email); alert("Logged in!"); showPage('home'); }
+  else alert(data.message);
+}
+
+async function signup(){
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  if(!email || !password){ alert("Enter email & password"); return; }
+
+  const res = await fetch(`${API_URL}/signup`,{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({email,password})
+  });
+  const data = await res.json();
+  if(data.success){ localStorage.setItem('userEmail', email); alert("Signed up!"); showPage('home'); }
+  else alert(data.message);
+}
+</script>
+
+</body>
+</html>
