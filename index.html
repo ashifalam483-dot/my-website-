@@ -966,5 +966,52 @@
   </script>
 </body>
 </html>
+<!-- 🩵 Firebase Backend -->
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // 🔥 Your Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoIcJ6p-MlTgZaW6qTV9w3jPdwZvXlFaw",
+    authDomain: "resume-builder-2dda8.firebaseapp.com",
+    projectId: "resume-builder-2dda8",
+    storageBucket: "resume-builder-2dda8.firebasestorage.app",
+    messagingSenderId: "600182491779",
+    appId: "1:600182491779:web:a7cbbfbdaad1242101e9b6",
+    measurementId: "G-KYXF27S5JW"
+  };
+
+  // 🚀 Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // 📝 Save Resume Function
+  async function saveResume(event) {
+    event.preventDefault(); // stop page refresh
+
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const title = document.getElementById("title").value;
+    const phone = document.getElementById("phone").value;
+    const linkedin = document.getElementById("linkedin").value;
+
+    try {
+      await db.collection("resumes").add({
+        name,
+        email,
+        title,
+        phone,
+        linkedin,
+        createdAt: new Date()
+      });
+      alert("✅ Resume saved successfully!");
+      event.target.reset();
+    } catch (error) {
+      console.error("Error saving resume:", error);
+      alert("❌ Failed to save resume. Check console for details.");
+    }
+  }
+</script>
 </body>
 </html>
