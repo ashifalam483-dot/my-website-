@@ -872,6 +872,25 @@
     }
   }
 </script>
+  <!-- 🩵 Step 2: Login / Signup Section -->
+<div id="auth-section">
+  <h3>Login / Signup</h3>
+  <input type="email" id="authEmail" placeholder="Enter email" required>
+  <input type="password" id="authPassword" placeholder="Enter password" required>
+  <button onclick="signup()">Sign Up</button>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<!-- 🩶 Your Resume Form (you already have this) -->
+<form id="resumeForm" onsubmit="saveResume(event)">
+  <input type="text" id="name" placeholder="Full Name" required>
+  <input type="text" id="title" placeholder="Job Title" required>
+  <input type="email" id="email" placeholder="Email" required>
+  <input type="text" id="phone" placeholder="Phone Number" required>
+  <input type="text" id="linkedin" placeholder="LinkedIn Profile">
+  <!-- and the rest of your form... -->
+</form>
   <form onsubmit="saveResume(event)">
   <input id="name" placeholder="Your name" required><br>
   <input id="email" placeholder="Your email" required><br>
