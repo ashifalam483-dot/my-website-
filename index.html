@@ -829,12 +829,7 @@
     (function tryHash(){ if(location.hash.startsWith('#resume=')){ try{ const enc = location.hash.replace('#resume=',''); const json = decodeURIComponent(escape(atob(decodeURIComponent(enc)))); const parsed = JSON.parse(json); if(parsed){ state = parsed; saveState(false); renderAll(); showToast('Loaded shared resume'); } }catch(e){ console.warn('Invalid resume hash'); } } })();
 
   </script>
-  <!-- ✅ Correct Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"></script>
-
-<script>
+  <script>
   // Your Firebase project details
   const firebaseConfig = {
     apiKey: "AIzaSyBoIcJ6p-MlTgZaW6qTV9w3jPdwZvXlFaw",
@@ -884,7 +879,16 @@ const db = firebase.firestore();
   <button onclick="login()">Login</button>
   <button onclick="logout()">Logout</button>
 </div>
-
+<!-- 🔐 LOGIN / SIGNUP SECTION -->
+<div id="authUI">
+  <h3>Login / Sign Up</h3>
+  <input id="userEmail" type="email" placeholder="Email">
+  <input id="userPassword" type="password" placeholder="Password">
+  <button onclick="signUp()">Sign Up</button>
+  <button onclick="logIn()">Login</button>
+  <button onclick="logOut()">Logout</button>
+  <p id="authStatus">Not logged in</p>
+</div>
 <!-- 🩶 Your Resume Form (already in your file) -->
 <form id="resumeForm" onsubmit="saveResume(event)">
   <input type="text" id="name" placeholder="Full Name" required>
@@ -893,14 +897,6 @@ const db = firebase.firestore();
   <input type="text" id="phone" placeholder="Phone Number" required>
   <input type="text" id="linkedin" placeholder="LinkedIn Profile">
   <!-- rest of your fields -->
-</form>
-  <form id="resumeForm" onsubmit="saveResume(event)">
-  <input type="text" id="name" placeholder="Full Name" required>
-  <input type="text" id="title" placeholder="Job Title" required>
-  <input type="email" id="email" placeholder="Email" required>
-  <input type="text" id="phone" placeholder="Phone Number" required>
-  <input type="text" id="linkedin" placeholder="LinkedIn Profile">
-  <!-- and the rest of your form... -->
 </form>
   <form onsubmit="saveResume(event)">
   <input id="name" placeholder="Your name" required><br>
@@ -996,5 +992,100 @@ const db = firebase.firestore();
     }
   }
 </script>
+<!-- ======= FIREBASE (COMPAT) - PLACE THIS BLOCK ONCE, RIGHT BEFORE </body> ======= -->
+<!-- 1) Firebase libraries (compat) -->
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"></script>
+
+<!-- 2) Firebase config + initialize DB & Auth -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoIcJ6p-MlTgZaW6qTV9w3jPdwZvXlFaw",
+    authDomain: "resume-builder-2dda8.firebaseapp.com",
+    projectId: "resume-builder-2dda8",
+    // IMPORTANT: use .appspot.com here (not .firebasestorage.app)
+    storageBucket: "resume-builder-2dda8.appspot.com",
+    messagingSenderId: "600182491779",
+    appId: "1:600182491779:web:a7cbbfbdaad1242101e9b6",
+    measurementId: "G-KYXF27S5JW"
+  };
+
+  // initialize firebase, firestore and auth (must be after the compat scripts above)
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+</script>
+
+<!-- 3) Authentication UI logic (signup/login/logout) -->
+<script>
+  // sign up
+  function signUp() {
+    const email = document.getElementById("userEmail").value;
+    const password = document.getElementById("userPassword").value;
+    auth.createUserWithEmailAndPassword(email, password)
+      .then(() => { document.getElementById("authStatus").innerText = "✅ Account created"; })
+      .catch(err => alert(err.message));
+  }
+
+  // login
+  function logIn() {
+    const email = document.getElementById("userEmail").value;
+    const password = document.getElementById("userPassword").value;
+    auth.signInWithEmailAndPassword(email, password)
+      .then(() => { document.getElementById("authStatus").innerText = "✅ Logged in"; })
+      .catch(err => alert(err.message));
+  }
+
+  // logout
+  function logOut() {
+    auth.signOut().then(() => { document.getElementById("authStatus").innerText = "Logged out"; });
+  }
+
+  // show who is logged in (keeps the page updated)
+  auth.onAuthStateChanged(user => {
+    const el = document.getElementById("authStatus");
+    if (!el) return; // if not on page, ignore
+    if (user) el.innerText = `Logged in as ${user.email}`;
+    else el.innerText = "Not logged in";
+  });
+</script>
+
+<!-- 4) Save resume function — the form must call this (onsubmit) -->
+<script>
+  async function saveResume(event) {
+    event.preventDefault();
+
+    // get values from inputs (these exact ids must exist in your form)
+    const name = document.getElementById("name")?.value || "";
+    const title = document.getElementById("title")?.value || "";
+    const email = document.getElementById("email")?.value || "";
+    const phone = document.getElementById("phone")?.value || "";
+    const linkedin = document.getElementById("linkedin")?.value || "";
+
+    // require user to be logged in because your rules need auth
+    const user = auth.currentUser;
+    if (!user) {
+      alert("❗ Please log in or sign up first.");
+      return;
+    }
+
+    try {
+      await db.collection("resumes").add({
+        name, title, email, phone, linkedin,
+        uid: user.uid,
+        createdAt: new Date()
+      });
+      alert("✅ Resume saved successfully!");
+      // reset form if you want:
+      const form = document.getElementById("resumeForm");
+      if (form) form.reset();
+    } catch (err) {
+      console.error("save error:", err);
+      alert("❌ Failed to save resume: " + (err.message || err));
+    }
+  }
+</script>
+<!-- ======= END FIREBASE BLOCK ======= -->
 </body>
 </html>
