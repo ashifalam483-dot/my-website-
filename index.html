@@ -1014,78 +1014,80 @@ const db = firebase.firestore();
   // initialize firebase, firestore and auth (must be after the compat scripts above)
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const auth = firebase.auth();
-</script>
+  <!-- ✅ Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"></script>
 
-<!-- 3) Authentication UI logic (signup/login/logout) -->
 <script>
-  // sign up
+  // Your Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBoIcJ6p-MlTgZaW6qTV9w3jPdwZvXlFaw",
+    authDomain: "resume-builder-2dda8.firebaseapp.com",
+    projectId: "resume-builder-2dda8",
+    storageBucket: "resume-builder-2dda8.appspot.com",
+    messagingSenderId: "600182491779",
+    appId: "1:600182491779:web:a7cbbfbdaad1242101e9b6",
+    measurementId: "G-KYXF27S5JW"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  // Sign Up
   function signUp() {
     const email = document.getElementById("userEmail").value;
     const password = document.getElementById("userPassword").value;
     auth.createUserWithEmailAndPassword(email, password)
-      .then(() => { document.getElementById("authStatus").innerText = "✅ Account created"; })
-      .catch(err => alert(err.message));
+      .then(() => alert("✅ Account Created!"))
+      .catch(err => alert("❌ " + err.message));
   }
 
-  // login
+  // Log In
   function logIn() {
     const email = document.getElementById("userEmail").value;
     const password = document.getElementById("userPassword").value;
     auth.signInWithEmailAndPassword(email, password)
-      .then(() => { document.getElementById("authStatus").innerText = "✅ Logged in"; })
-      .catch(err => alert(err.message));
+      .then(() => alert("✅ Logged In!"))
+      .catch(err => alert("❌ " + err.message));
   }
 
-  // logout
+  // Log Out
   function logOut() {
-    auth.signOut().then(() => { document.getElementById("authStatus").innerText = "Logged out"; });
+    auth.signOut().then(() => alert("👋 Logged Out!"));
   }
 
-  // show who is logged in (keeps the page updated)
-  auth.onAuthStateChanged(user => {
-    const el = document.getElementById("authStatus");
-    if (!el) return; // if not on page, ignore
-    if (user) el.innerText = `Logged in as ${user.email}`;
-    else el.innerText = "Not logged in";
-  });
-</script>
-
-<!-- 4) Save resume function — the form must call this (onsubmit) -->
-<script>
+  // Save Resume (only if logged in)
   async function saveResume(event) {
     event.preventDefault();
 
-    // get values from inputs (these exact ids must exist in your form)
-    const name = document.getElementById("name")?.value || "";
-    const title = document.getElementById("title")?.value || "";
-    const email = document.getElementById("email")?.value || "";
-    const phone = document.getElementById("phone")?.value || "";
-    const linkedin = document.getElementById("linkedin")?.value || "";
-
-    // require user to be logged in because your rules need auth
     const user = auth.currentUser;
     if (!user) {
-      alert("❗ Please log in or sign up first.");
+      alert("❗ Please log in first.");
       return;
     }
 
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const skills = document.getElementById("skills").value;
+
     try {
       await db.collection("resumes").add({
-        name, title, email, phone, linkedin,
-        uid: user.uid,
+        name,
+        email,
+        skills,
+        userId: user.uid,
         createdAt: new Date()
       });
       alert("✅ Resume saved successfully!");
-      // reset form if you want:
-      const form = document.getElementById("resumeForm");
-      if (form) form.reset();
-    } catch (err) {
-      console.error("save error:", err);
-      alert("❌ Failed to save resume: " + (err.message || err));
+      event.target.reset();
+    } catch (error) {
+      console.error("Error saving resume:", error);
+      alert("❌ Failed to save resume");
     }
   }
 </script>
-<!-- ======= END FIREBASE BLOCK ======= -->
 </body>
 </html>
