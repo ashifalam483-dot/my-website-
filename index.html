@@ -829,9 +829,10 @@
     (function tryHash(){ if(location.hash.startsWith('#resume=')){ try{ const enc = location.hash.replace('#resume=',''); const json = decodeURIComponent(escape(atob(decodeURIComponent(enc)))); const parsed = JSON.parse(json); if(parsed){ state = parsed; saveState(false); renderAll(); showToast('Loaded shared resume'); } }catch(e){ console.warn('Invalid resume hash'); } } })();
 
   </script>
-  <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js"></script>
+  <!-- ✅ Correct Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-auth-compat.js"></script>
 
 <script>
   // Your Firebase project details
@@ -843,7 +844,9 @@
     messagingSenderId: "600182491779",
     appId: "1:600182491779:web:a7cbbfbdaad1242101e9b6",
     measurementId: "G-KYXF27S5JW"
-  };
+    firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+</script>
 
   // Initialize Firebase
   const app = firebase.initializeApp(firebaseConfig);
